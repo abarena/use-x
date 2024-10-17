@@ -95,9 +95,10 @@ export default function useFetchSolution<T>(
       const requestInit = (requestOptions || {});
       requestInit.signal = abortController.current.signal;
       const currentController = abortController.current;
-      // // artificial delay for demo
-      await new Promise(resolve => setTimeout(resolve, 1000));
       const response = await fetch(url, requestInit);
+      if (!response.ok) {
+        throw new Error(response.statusText);
+      }
       const json = await response.json();
       if (currentController.signal.aborted) {
         return;
@@ -118,7 +119,7 @@ export default function useFetchSolution<T>(
   }, [url, requestOptions]);
 
   useEffect(() => {
-    if (options?.immediate) {
+    if (options.immediate) {
       load();
     }
 

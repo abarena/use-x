@@ -1,4 +1,4 @@
-// remote .skip from a test to run it
+// remove .skip from a test to run it
 
 import type { Mock } from "vitest";
 import type { UseFetchOptions, UseFetchReturn } from "./use-fetch";
@@ -111,7 +111,7 @@ describe("useFetch", () => {
       expect(result.current.data).toBeNull();
     });
 
-    it.skip("should handle JSON parse errors correctly", async () => {
+    it("should handle JSON parse errors correctly", async () => {
       mocks.fetch.mockResolvedValue({
         ok: true,
         json: vi.fn().mockRejectedValue(new Error("Invalid JSON")),
@@ -121,7 +121,23 @@ describe("useFetch", () => {
 
       await waitFor(() => expect(result.current.loading).toBe(false));
 
-      expect(result.current.error).toBeDefined();
+      expect(result.current.error).toBe("Invalid JSON");
+      expect(result.current.data).toBeNull();
+    });
+
+    it.skip("should handle http errors correctly", async () => {
+      mocks.fetch.mockResolvedValue({
+        ok: false,
+        statusText: "Not Found",
+        status: 404,
+        json: vi.fn().mockRejectedValue(new Error("Invalid JSON")),
+      });
+
+      const { result } = renderHook(() => useFetch<Data>(url));
+
+      await waitFor(() => expect(result.current.loading).toBe(false));
+
+      expect(result.current.error).toBe("Not Found");
       expect(result.current.data).toBeNull();
     });
   });

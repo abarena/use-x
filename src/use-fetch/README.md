@@ -4,6 +4,25 @@ Manage the error, loading and data state of `fetch`
 
 See example use [here](./use-fetch.example.tsx)
 
+## Updates Since Video Release
+
+- New requirement
+  - Error handling
+    - If the request fails due to http status (response.ok)
+- New test
+  - "should handle http errors correctly"
+
+<details>
+  <summary>New code in solution</summary>
+
+```ts
+if (!response.ok) {
+  throw new Error(response.statusText);
+}
+```
+
+</details>
+
 ## Requirements
 
 - [ ] Accepts:
@@ -30,7 +49,10 @@ See example use [here](./use-fetch.example.tsx)
   - [ ] Should fetch on mount if `options.immediate` is true
   - [ ] Should set loading when fetching data
   - [ ] Error handling
-    - [ ] If the request fails (status not OK) OR the json parse fails:
+    - [ ] If the request fails due to fetch error (e.g. Network Error)
+    - [ ] If the request fails due to http status (response.ok)
+    - [ ] If the json parse fails
+    - [ ] If any error occurs:
       - [ ] Set the error message
       - [ ] Set data to null
       - [ ] Set loading to false
