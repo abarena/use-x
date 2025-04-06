@@ -143,7 +143,7 @@ describe("useFetch", () => {
   });
 
   describe("update Functions", () => {
-    it.skip("should re-fetch if url is updated", async () => {
+    it("should re-fetch if url is updated", async () => {
       const { result } = renderHook(() => useFetch<Data>(url));
       await waitFor(() => !result.current.loading);
       expect(result.current.data).toEqual(data);
@@ -157,7 +157,7 @@ describe("useFetch", () => {
       expect(result.current.data).toEqual({ message: "New data!" });
     });
 
-    it.skip("should re-fetch if request options are updated", async () => {
+    it("should re-fetch if request options are updated", async () => {
       const { result } = renderHook(() => useFetch<Data>(url));
       await waitFor(() => !result.current.loading);
       expect(result.current.data).toEqual(data);
@@ -175,7 +175,7 @@ describe("useFetch", () => {
       expect(result.current.data).toEqual({ message: "New data!" });
     });
 
-    it.skip("should re-fetch if options are updated", async () => {
+    it("should re-fetch if options are updated", async () => {
       const { result } = renderHook(() =>
         useFetch<Data>(url, {}, { immediate: false }),
       );
@@ -187,7 +187,7 @@ describe("useFetch", () => {
       expect(result.current.data).toEqual(data);
     });
 
-    it.skip("should re-fetch if load function is called", async () => {
+    it("should re-fetch if load function is called", async () => {
       const { result } = renderHook(() => useFetch<Data>(url));
       await waitFor(() => !result.current.loading);
       expect(result.current.data).toEqual(data);
@@ -203,7 +203,7 @@ describe("useFetch", () => {
   });
 
   describe("multiple requests", () => {
-    it.skip("should clear data and not set error when aborted", async () => {
+    it("should clear data and not set error when aborted", async () => {
       const abortError = new Error("Request aborted");
       abortError.name = "AbortError";
       mocks.fetch.mockRejectedValue(abortError);
@@ -217,7 +217,7 @@ describe("useFetch", () => {
       expect(result.current.data).toEqual(null);
     });
 
-    it.skip("should clear existing data if load function is called", async () => {
+    it("should clear existing data if load function is called", async () => {
       const { result } = renderHook(() => useFetch<Data>(url));
       await waitFor(() => !result.current.loading);
       expect(result.current.data).toEqual(data);
@@ -236,7 +236,7 @@ describe("useFetch", () => {
       expect(result.current.data).toEqual({ message: "New data 2!" });
     });
 
-    it.skip("should clear existing error if load function is called", async () => {
+    it("should clear existing error if load function is called", async () => {
       mocks.fetch.mockRejectedValue(new Error("Network Error"));
       const { result } = renderHook(() => useFetch<Data>(url));
       await waitFor(() => !result.current.loading);
@@ -257,7 +257,7 @@ describe("useFetch", () => {
       expect(result.current.data).toEqual({ message: "New data!" });
     });
 
-    it.skip("should abort previous fetch if load is called while fetching", async () => {
+    it("should abort previous fetch if load is called while fetching", async () => {
       const fetchMocks = {
         first: {
           url: "http://abort-test.com/first",
@@ -313,7 +313,7 @@ describe("useFetch", () => {
   });
 
   describe("cleanup", () => {
-    it.skip("should abort a request in progress if unmounted", async () => {
+    it("should abort a request in progress if unmounted", async () => {
       let aborted = false;
       const json = vi.fn().mockResolvedValue(data);
       mocks.fetch.mockImplementation((_url: string, options: RequestInit) => {
