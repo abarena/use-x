@@ -88,7 +88,7 @@ describe("useFetch", () => {
       expect(mocks.fetch).toHaveBeenCalledTimes(1);
     });
 
-    it.skip("should set error if url empty", async () => {
+    it("should set error if url empty", async () => {
       const { result } = renderHook(() => useFetch<Data>(""));
 
       await act(() => {
@@ -100,7 +100,7 @@ describe("useFetch", () => {
   });
 
   describe("error Handling", () => {
-    it.skip("should handle network errors correctly", async () => {
+    it("should handle network errors correctly", async () => {
       mocks.fetch.mockRejectedValue(new Error("Network Error"));
 
       const { result } = renderHook(() => useFetch<Data>(url));
@@ -111,7 +111,7 @@ describe("useFetch", () => {
       expect(result.current.data).toBeNull();
     });
 
-    it.skip("should handle JSON parse errors correctly", async () => {
+    it("should handle JSON parse errors correctly", async () => {
       mocks.fetch.mockResolvedValue({
         ok: true,
         json: vi.fn().mockRejectedValue(new Error("Invalid JSON")),
@@ -125,7 +125,7 @@ describe("useFetch", () => {
       expect(result.current.data).toBeNull();
     });
 
-    it.skip("should handle http errors correctly", async () => {
+    it("should handle http errors correctly", async () => {
       mocks.fetch.mockResolvedValue({
         ok: false,
         statusText: "Not Found",

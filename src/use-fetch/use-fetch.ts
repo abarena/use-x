@@ -24,15 +24,33 @@ export default function useFetch<T>(
 ): UseFetchReturn<T> {
   const [loading, setLoading] = useState(false);
   const [data, setData] = useState<T | null>(null);
-  const [options, setOptions] = useState(initialOptions || { immediate: true });
+  const [error, setError] = useState<string | null>(null);
+  const [url, updateUrl] = useState(initialUrl);
+  const [options, updateOptions] = useState(initialOptions || { immediate: true });
+  const [requestOptions, updateRequestOptions] = useState<RequestInit | undefined>(initialRequestOptions);
   
   const load = useCallback(async () => {
+    if (!url) {
+      setError("Empty URL");
+      return;
+    }
     setLoading(true);
-    const res = await fetch(initialUrl);
-    const data = await res.json();
-    setData(data);
-    setLoading(false);
-  }, [initialUrl]);
+    try {
+      const res = await fetch(url, requestOptions);
+      if (!res.ok) {
+        setError(res.statusText);
+        return;
+      }
+      const data = await res.json();
+      setData(data);
+
+    } catch (e) {
+      const error  = e as Error;
+      setError(error.message);
+    } finally {
+      setLoading(false);
+    }
+  }, [url, requestOptions]);
 
   useEffect(() => {
     if (options?.immediate) {
@@ -41,13 +59,13 @@ export default function useFetch<T>(
   }, [options, load]);
 
   return {
-    url: "",
+    url,
     loading,
-    error: null,
+    error,
     data,
     load,
-    updateUrl: () => {},
-    updateOptions: setOptions,
-    updateRequestOptions: () => {},
+    updateUrl,
+    updateOptions,
+    updateRequestOptions,
   };
 }
