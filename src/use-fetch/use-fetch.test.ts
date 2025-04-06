@@ -32,12 +32,12 @@ describe("useFetch", () => {
   });
 
   describe("initial Fetch", () => {
-    it.skip("should fetch on mount by default", async () => {
+    it("should fetch on mount by default", async () => {
       renderHook(() => useFetch<Data>(url));
       expect(mocks.fetch).toHaveBeenCalled();
     });
 
-    it.skip("should set loading when fetching data", async () => {
+    it("should set loading when fetching data", async () => {
       const { result } = renderHook(() => useFetch<Data>(url));
 
       expect(result.current.loading).toBe(true);
@@ -45,7 +45,7 @@ describe("useFetch", () => {
       await waitFor(() => expect(result.current.loading).toBe(false));
     });
 
-    it.skip("should set data after fetch", async () => {
+    it("should set data after fetch", async () => {
       const { result } = renderHook(() => useFetch<Data>(url));
 
       expect(result.current.loading).toBe(true);
@@ -56,7 +56,7 @@ describe("useFetch", () => {
       expect(result.current.data).toEqual(data);
     });
 
-    it.skip("should not fetch on mount if immediate false", async () => {
+    it("should not fetch on mount if immediate false", async () => {
       const { result } = renderHook(() => useFetch<Data>(url, undefined, {
         immediate: false,
       }));
@@ -65,7 +65,7 @@ describe("useFetch", () => {
       expect(mocks.fetch).not.toHaveBeenCalled();
     });
 
-    it.skip("should not re-run if new options passed in directly", () => {
+    it("should not re-run if new options passed in directly", () => {
       const initialProps = {
         url,
         requestOptions: {},
