@@ -1,47 +1,69 @@
-// This is the file you need to update
-
-import { type Dispatch, type SetStateAction, useCallback, useEffect, useReducer, useRef, useState } from "react";
+import { act, useCallback, useEffect, useReducer, useRef } from "react";
 
 export type UseFetchOptions = {
   immediate: boolean;
 };
 
-export type UseFetchBaseState = {
+export type UseFetchBaseState<T> = {
   url: string;
-}
-
-export type UseFetchReturn<T> = UseFetchBaseState &{
   loading: boolean;
   error: string | null;
   data: T | null;
-  load: () => Promise<void>;
-  updateUrl: (url: string) => void;
-  updateOptions: Dispatch<SetStateAction<UseFetchOptions>>;
-  updateRequestOptions: (requestOptions: RequestInit) => void;
-};
-
-export type UseFetchState = UseFetchBaseState & {
-  requestOptions?: RequestInit;
-};
-
-export type UseFetchActions = {
-  type: "SET_URL",
-  payload: Pick<UseFetchState, "url">;
-} | {
-  type: "REQUEST_OPTIONS",
-  payload: Pick<UseFetchState, "requestOptions">;
 }
 
-function useFetchReducer(state: UseFetchState, action: UseFetchActions): UseFetchState {
+export type UseFetchReturn<T> = UseFetchBaseState<T> &{
+  load: () => Promise<void>;
+  updateUrl: (url: string) => void;
+  updateOptions: (options: UseFetchOptions)=> void;
+  updateRequestOptions: (requestOptions?:  RequestInit) => void;
+};
+
+export type UseFetchState<T> = UseFetchBaseState<T> & {
+  requestOptions?: RequestInit;
+  options: UseFetchOptions;
+};
+
+export type UseFetchActions<T> = {
+  type: "SET_URL",
+  payload: Pick<UseFetchState<T>, "url">;
+} | {
+  type: "SET_REQUEST_OPTIONS",
+  payload: Pick<UseFetchState<T>, "requestOptions">;
+} | {
+  type: "SET_OPTIONS",
+  payload: Pick<UseFetchState<T>, "options">;
+} | {
+  type: "FINISH_FETCHING",
+  payload: Pick<UseFetchState<T>, "data" | "error">;
+} | {
+  type: "ABORT_FETCHING" | "START_FETCHING",
+};
+
+function useFetchReducer<T>(state: UseFetchState<T>, action: UseFetchActions<T>): UseFetchState<T> {
   switch (action.type) {
     case "SET_URL":
-    case "REQUEST_OPTIONS":
+    case "SET_REQUEST_OPTIONS":
+    case "SET_OPTIONS":
       return {
         ...state,
         ...action.payload
       };
+    case "FINISH_FETCHING":
+    return {
+      ...state,
+      ...action.payload,
+      loading: false,
+    };
+    case "ABORT_FETCHING":
+    case "START_FETCHING":
+      return {
+        ...state,
+        loading: action.type === "START_FETCHING",
+        error: null,
+        data: null,
+      };
+    return state;
   }
-  return state;
 }
 
 export default function useFetch<T>(
@@ -49,29 +71,40 @@ export default function useFetch<T>(
   initialRequestOptions?: RequestInit,
   initialOptions?: UseFetchOptions,
 ): UseFetchReturn<T> {
-  const [loading, setLoading] = useState(false);
-  const [data, setData] = useState<T | null>(null);
-  const [error, setError] = useState<string | null>(null);
-  const [{ url, requestOptions }, dispatch] = useReducer(useFetchReducer, {
+  const [{
+    url,
+    loading,
+    data,
+    error,
+    requestOptions,
+    options,
+  }, dispatch] = useReducer(useFetchReducer<T>, {
+    loading: false,
+    data: null,
+    error: null,
     url: initialUrl,
-    requestOptions: initialRequestOptions
+    requestOptions: initialRequestOptions,
+    options: initialOptions || { immediate: true },
   });
-  const [options, updateOptions] = useState(initialOptions || { immediate: true });
+
   const abortController = useRef(new AbortController());
 
   const load = useCallback(async () => {
     abortController.current.abort();
     abortController.current = new AbortController();
-    setData(null);
 
     if (!url) {
-      setError("Empty URL");
+      dispatch({
+        type: "FINISH_FETCHING",
+        payload: {
+          data: null,
+          error: "Empty URL"
+        }
+      });
       return;
-    } else {
-      setError(null);
     }
 
-    setLoading(true);
+    dispatch({ type: "START_FETCHING" });
     
     try {
       const requestInit = (requestOptions || {});
@@ -79,23 +112,34 @@ export default function useFetch<T>(
       const currentAbortController = abortController.current;
       const res = await fetch(url, requestInit);
       if (!res.ok) {
-        setError(res.statusText);
-        return;
+        throw new Error(res.statusText);
       }
       const data = await res.json();
       if (currentAbortController.signal.aborted) {
         return;
       }
-      setData(data);
-
+      dispatch({
+        type: "FINISH_FETCHING",
+        payload: {
+          data,
+          error: null
+        }
+      });
     } catch (e) {
       const error  = e as Error;
-      if (error.name !== "AbortError") {
-        setData(null);
-        setError(error.message);
+      if (error.name === "AbortError") {
+        dispatch({
+          type: "ABORT_FETCHING",
+        });
+      } else {  
+        dispatch({
+          type: "FINISH_FETCHING",
+          payload: {
+            data: null,
+            error: error.message
+          }
+        });
       }
-    } finally {
-      setLoading(false);
     }
   }, [url, requestOptions]);
 
@@ -116,7 +160,8 @@ export default function useFetch<T>(
     data,
     load,
     updateUrl: (url: string) => dispatch({ type: "SET_URL", payload: { url } }),
-    updateOptions,
-    updateRequestOptions: (requestOptions: RequestInit) => dispatch({ type: "REQUEST_OPTIONS", payload: { requestOptions } }),
+    updateOptions: (options: UseFetchOptions) => dispatch({ type: "SET_OPTIONS", payload: { options } }),
+    updateRequestOptions: (requestOptions?: RequestInit) => dispatch({ type: "SET_REQUEST_OPTIONS", payload: { requestOptions } }),
   };
+
 }
