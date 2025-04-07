@@ -1,5 +1,5 @@
 // Update this import to test your implementation
-import useFetch from "./use-fetch.solution";
+import useFetch from "./use-fetch";
 
 export type Pokemon = {
   abilities: Ability[];
