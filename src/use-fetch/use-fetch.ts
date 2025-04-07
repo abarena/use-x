@@ -1,21 +1,52 @@
 // This is the file you need to update
 
-import { type Dispatch, type SetStateAction, useCallback, useEffect, useRef, useState } from "react";
+import { type Dispatch, type SetStateAction, useCallback, useEffect, useReducer, useRef, useState } from "react";
 
 export type UseFetchOptions = {
   immediate: boolean;
 };
 
-export type UseFetchReturn<T> = {
+export type UseFetchBaseState = {
+  url: string;
+}
+
+export type UseFetchReturn<T> = UseFetchBaseState &{
   loading: boolean;
   error: string | null;
   data: T | null;
-  url: string;
   load: () => Promise<void>;
-  updateUrl: Dispatch<SetStateAction<string>>;
+  updateUrl: (url: string) => void;
   updateOptions: Dispatch<SetStateAction<UseFetchOptions>>;
   updateRequestOptions: Dispatch<SetStateAction<RequestInit | undefined>>;
 };
+
+export type UseFetchSate = UseFetchBaseState & {
+  requestOptions?: RequestInit;
+};
+
+export type UseFetchActions = {
+  type: "SET_URL",
+  payload: {
+    url: string;
+  }
+} | {
+  type: "REQUEST_OPTIONS",
+  payload: {
+    requestOptions: RequestInit;  
+  }
+}
+
+function useFetchReducer(state: UseFetchState, action: UseFetchActions): UseFetchState {
+  switch (action.type) {
+    case "SET_URL":
+    case "REQUEST_OPTIONS":
+      return {
+        ...state,
+        ...action.payload
+      };
+  }
+  return state;
+}
 
 export default function useFetch<T>(
   initialUrl: string,
@@ -25,7 +56,7 @@ export default function useFetch<T>(
   const [loading, setLoading] = useState(false);
   const [data, setData] = useState<T | null>(null);
   const [error, setError] = useState<string | null>(null);
-  const [url, updateUrl] = useState(initialUrl);
+  const [{ url }, dispatch] = useReducer(useFetchReducer, { url: initialUrl });
   const [options, updateOptions] = useState(initialOptions || { immediate: true });
   const [requestOptions, updateRequestOptions] = useState<RequestInit | undefined>(initialRequestOptions);
   const abortController = useRef(new AbortController());
@@ -86,7 +117,7 @@ export default function useFetch<T>(
     error,
     data,
     load,
-    updateUrl,
+    updateUrl: (url: string) => dispatch({ type: "SET_URL", payload: { url } }),
     updateOptions,
     updateRequestOptions,
   };
