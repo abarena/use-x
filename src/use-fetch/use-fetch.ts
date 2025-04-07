@@ -17,23 +17,19 @@ export type UseFetchReturn<T> = UseFetchBaseState &{
   load: () => Promise<void>;
   updateUrl: (url: string) => void;
   updateOptions: Dispatch<SetStateAction<UseFetchOptions>>;
-  updateRequestOptions: Dispatch<SetStateAction<RequestInit | undefined>>;
+  updateRequestOptions: (requestOptions: RequestInit) => void;
 };
 
-export type UseFetchSate = UseFetchBaseState & {
+export type UseFetchState = UseFetchBaseState & {
   requestOptions?: RequestInit;
 };
 
 export type UseFetchActions = {
   type: "SET_URL",
-  payload: {
-    url: string;
-  }
+  payload: Pick<UseFetchState, "url">;
 } | {
   type: "REQUEST_OPTIONS",
-  payload: {
-    requestOptions: RequestInit;  
-  }
+  payload: Pick<UseFetchState, "requestOptions">;
 }
 
 function useFetchReducer(state: UseFetchState, action: UseFetchActions): UseFetchState {
@@ -56,9 +52,11 @@ export default function useFetch<T>(
   const [loading, setLoading] = useState(false);
   const [data, setData] = useState<T | null>(null);
   const [error, setError] = useState<string | null>(null);
-  const [{ url }, dispatch] = useReducer(useFetchReducer, { url: initialUrl });
+  const [{ url, requestOptions }, dispatch] = useReducer(useFetchReducer, {
+    url: initialUrl,
+    requestOptions: initialRequestOptions
+  });
   const [options, updateOptions] = useState(initialOptions || { immediate: true });
-  const [requestOptions, updateRequestOptions] = useState<RequestInit | undefined>(initialRequestOptions);
   const abortController = useRef(new AbortController());
 
   const load = useCallback(async () => {
@@ -119,6 +117,6 @@ export default function useFetch<T>(
     load,
     updateUrl: (url: string) => dispatch({ type: "SET_URL", payload: { url } }),
     updateOptions,
-    updateRequestOptions,
+    updateRequestOptions: (requestOptions: RequestInit) => dispatch({ type: "REQUEST_OPTIONS", payload: { requestOptions } }),
   };
 }
